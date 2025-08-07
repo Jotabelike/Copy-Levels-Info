@@ -1,0 +1,50 @@
+{
+	"geode": "4.7.0",
+	"gd": {
+		"win": "2.2074",
+		"android": "2.2074",
+		"mac": "2.2074",
+		"ios": "2.2074"
+	},
+	"id": "jotabelike.copy-level-info",
+	"name": "Copy Level Info",
+	"version": "1.1.0",
+	"developer": "Jotabelike",
+	"description": "Copia información personalizada de un nivel usando casillas configurables.",
+	"tags": [
+		"utility",
+		"interface"
+	],
+	"settings": {
+		"copy-level-id": {
+			"type": "bool",
+			"default": true,
+			"name": "Copy Level ID"
+		},
+		"copy-level-name": {
+			"type": "bool",
+			"default": true,
+			"name": "Copy Name"
+		},
+		"copy-song-id": {
+			"type": "bool",
+			"default": true,
+			"name": "Copy Song ID"
+		},
+		"copy-creator": {
+			"type": "bool",
+			"default": true,
+			"name": "Copy Creator Name"
+		},
+		"copy-stars": {
+			"type": "bool",
+			"default": true,
+			"name": "Copy Total Stars"
+		},
+		"copy-difficulty": {
+			"type": "bool",
+			"default": true,
+			"name": "Copy Dificulty"
+		}
+	}
+}
