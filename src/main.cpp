@@ -6,7 +6,6 @@
 
 using namespace geode::prelude;
 
-// Función para obtener la dificultad como texto
 std::string getLevelDifficulty(GJGameLevel* level) {
     if (!level) return "Unknown";
 
@@ -34,7 +33,6 @@ std::string getLevelDifficulty(GJGameLevel* level) {
     }
 }
 
-// Copiar la información del nivel al portapapeles y mostrar notificación, usando los bool del mod.json
 void copyLevelInfo(GJGameLevel* level) {
     if (!level) {
         Notification::create("Error: invalid level", NotificationIcon::Error)->show();
@@ -54,11 +52,11 @@ void copyLevelInfo(GJGameLevel* level) {
     if (copyLevelID)
         info << "ID: " << level->m_levelID.value() << "\n";
     if (copyLevelName)
-        info << "Level Name: " << level->m_levelName << "\n";
+        info << "Level Name: " << level->m_levelName.c_str() << "\n";
     if (copySongID)
         info << "Song ID: " << level->m_songID << "\n";
     if (copyCreator)
-        info << "Creator: " << level->m_creatorName << "\n";
+        info << "Creator: " << level->m_creatorName.c_str() << "\n";
     if (copyStars)
         info << "Stars: " << level->m_stars << "\n";
     if (copyDifficulty)
@@ -82,7 +80,6 @@ public:
     bool init(GJGameLevel * level, bool p1) {
         if (!LevelInfoLayer::init(level, p1)) return false;
 
-        // Crear botón rosado con texto
         auto label = CCLabelBMFont::create("COPY", "bigFont.fnt");
         label->setScale(0.7f);
         auto copySpr = CircleButtonSprite::create(label, CircleBaseColor::Pink, CircleBaseSize::Medium);
@@ -94,11 +91,9 @@ public:
             menu_selector(LevelInfoLayerCopyHook::onCopy)
         );
 
-        // --- CREA UN MENÚ para el botón ---
         m_fields->m_copyMenu = CCMenu::create();
         m_fields->m_copyMenu->addChild(m_fields->m_copyBtn);
 
-        // Posicionar menú igual que antes (respecto al botón de like si existe)
         if (auto likeBtn = this->getChildByID("like-button")) {
             m_fields->m_copyMenu->setPosition(
                 likeBtn->getPositionX() - 70.f,
@@ -109,7 +104,6 @@ public:
             m_fields->m_copyMenu->setPosition(106.f, 30.f);
         }
 
-        // Añadir el menú al menú inferior si existe, si no, a la capa
         if (auto menu = this->getChildByID("bottom-menu")) {
             menu->addChild(m_fields->m_copyMenu);
         }
