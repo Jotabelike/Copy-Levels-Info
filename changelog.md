@@ -1,4 +1,8 @@
-# Changelog
+# Versions
+
+## v1.1.5
+- Added the option to copy the duration of levels
+- Added the option to copy level objects (It is not an accurate copy in some cases)
 
 ## v1.1.0
 - Added customizable checkboxes for every field: level ID, name, song ID, creator, stars, and difficulty.  

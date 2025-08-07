@@ -9,26 +9,42 @@ using namespace geode::prelude;
 std::string getLevelDifficulty(GJGameLevel* level) {
     if (!level) return "Unknown";
 
-    if (level->m_autoLevel) return "Auto";
     if (level->m_demon) {
         switch (level->m_demonDifficulty) {
         case 3: return "Easy Demon";
         case 4: return "Medium Demon";
-        case 5: return "Hard Demon";
-        case 6: return "Insane Demon";
-        case 7: return "Extreme Demon";
-        default: return "Demon";
+        case 5: return "Insane Demon";
+        case 6: return "Extreme Demon";
         }
+        return "Hard Demon";
     }
 
-    switch (static_cast<GJDifficulty>(level->m_difficulty)) {
-    case GJDifficulty::NA: return "NA";
-    case GJDifficulty::Easy: return "Easy";
-    case GJDifficulty::Normal: return "Normal";
-    case GJDifficulty::Hard: return "Hard";
-    case GJDifficulty::Harder: return "Harder";
-    case GJDifficulty::Insane: return "Insane";
-    case GJDifficulty::Demon: return "Demon";
+    if (level->m_autoLevel || level->m_stars == 1)
+        return "Auto";
+    if (level->m_stars == 2)
+        return "Easy";
+    if (level->m_stars == 3)
+        return "Normal";
+    if (level->m_stars == 4 || level->m_stars == 5)
+        return "Hard";
+    if (level->m_stars == 6 || level->m_stars == 7)
+        return "Harder";
+    if (level->m_stars == 8 || level->m_stars == 9)
+        return "Insane";
+    if (level->m_stars == 0)
+        return "Unrated";
+
+    return "Unknown";
+}
+
+// Devuelve la duración como texto legible
+std::string getLengthName(int levelLength) {
+    switch (levelLength) {
+    case 0: return "Tiny";
+    case 1: return "Short";
+    case 2: return "Medium";
+    case 3: return "Long";
+    case 4: return "XL";
     default: return "Unknown";
     }
 }
@@ -47,6 +63,8 @@ void copyLevelInfo(GJGameLevel* level) {
     bool copyCreator = mod->getSettingValue<bool>("copy-creator");
     bool copyStars = mod->getSettingValue<bool>("copy-stars");
     bool copyDifficulty = mod->getSettingValue<bool>("copy-difficulty");
+    bool copyObjects = mod->getSettingValue<bool>("copy-objects");
+    bool copyDuration = mod->getSettingValue<bool>("copy-duration");
 
     std::stringstream info;
     if (copyLevelID)
@@ -61,6 +79,10 @@ void copyLevelInfo(GJGameLevel* level) {
         info << "Stars: " << level->m_stars << "\n";
     if (copyDifficulty)
         info << "Dificulty: " << getLevelDifficulty(level) << "\n";
+    if (copyObjects)
+        info << "Objects: " << level->m_objectCount << "\n";
+    if (copyDuration)
+        info << "Duration: " << getLengthName(level->m_levelLength) << "\n";
 
     if (geode::utils::clipboard::write(info.str())) {
         Notification::create("Copied!", NotificationIcon::Success)->show();

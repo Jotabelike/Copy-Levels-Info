@@ -45,6 +45,16 @@
 			"type": "bool",
 			"default": true,
 			"name": "Copy Dificulty"
+		},
+		"copy-objects": {
+			"type": "bool",
+			"default": true,
+			"name": "Copy Object Count"
+		},
+		"copy-duration": {
+			"type": "bool",
+			"default": true,
+			"name": "Copy Level Duration"
 		}
 	}
 }
