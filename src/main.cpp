@@ -78,7 +78,7 @@ void copyLevelInfo(GJGameLevel* level) {
     if (copyStars)
         info << "Stars: " << level->m_stars << "\n";
     if (copyDifficulty)
-        info << "Dificulty: " << getLevelDifficulty(level) << "\n";
+        info << "Difficulty: " << getLevelDifficulty(level) << "\n";
     if (copyObjects)
         info << "Objects: " << level->m_objectCount << "\n";
     if (copyDuration)
