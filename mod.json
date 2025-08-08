@@ -8,9 +8,9 @@
 	},
 	"id": "jotabelike.copy-level-info",
 	"name": "Copy Level Info",
-	"version": "1.1.5",
+	"version": "1.1.7",
 	"developer": "Jotabelike",
-	"description": "Copia información personalizada de un nivel usando casillas configurables.",
+	"description": "Copy custom information from a level using configurable checkboxes.",
 	"tags": [
 		"utility",
 		"interface"

@@ -1,6 +1,10 @@
 # Versions
 
 ## v1.1.5
+- Update description 
+
+
+## v1.1.5
 - Added the option to copy the duration of levels
 - Added the option to copy level objects (It is not an accurate copy in some cases)
 
