@@ -37,7 +37,7 @@ std::string getLevelDifficulty(GJGameLevel* level) {
     return "Unknown";
 }
 
-// Devuelve la duración como texto legible
+
 std::string getLengthName(int levelLength) {
     switch (levelLength) {
     case 0: return "Tiny";
