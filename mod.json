@@ -1,60 +1,26 @@
 {
-	"geode": "4.7.0",
-	"gd": {
-		"win": "2.2074",
-		"android": "2.2074",
-		"mac": "2.2074",
-		"ios": "2.2074"
-	},
-	"id": "jotabelike.copy-level-info",
-	"name": "Copy Level Info",
-	"version": "1.2.0",
-	"developer": "Jotabelike",
-	"description": "Copy custom information from a level using configurable checkboxes.",
-	"tags": [
-		"utility",
-		"interface"
-	],
-	"settings": {
-		"copy-level-id": {
-			"type": "bool",
-			"default": true,
-			"name": "Copy Level ID"
-		},
-		"copy-level-name": {
-			"type": "bool",
-			"default": true,
-			"name": "Copy Name"
-		},
-		"copy-song-id": {
-			"type": "bool",
-			"default": true,
-			"name": "Copy Song ID"
-		},
-		"copy-creator": {
-			"type": "bool",
-			"default": true,
-			"name": "Copy Creator Name"
-		},
-		"copy-stars": {
-			"type": "bool",
-			"default": true,
-			"name": "Copy Total Stars"
-		},
-		"copy-difficulty": {
-			"type": "bool",
-			"default": true,
-			"name": "Copy Dificulty"
-		},
-		"copy-objects": {
-			"type": "bool",
-			"default": true,
-			"name": "Copy Object Count"
-		},
-		"copy-duration": {
-			"type": "bool",
-			"default": true,
-			"name": "Copy Level Duration"
-		}
-	}
+  "geode": "4.7.0",
+  "gd": {
+    "win": "2.2074",
+    "android": "2.2074",
+    "mac": "2.2074",
+    "ios": "2.2074"
+  },
+  "id": "jotabelike.copy-level-info",
+  "name": "Copy Level Info",
+  "version": "1.2.5",
+  "developer": "Jotabelike",
+  "description": "Copy custom information from a level using configurable checkboxes.",
+  "tags": ["utility", "interface"],
+  "settings": {
+    "copy-level-id":        { "type": "bool", "default": true,  "name": "Copy Level ID" },
+    "copy-level-name":      { "type": "bool", "default": true,  "name": "Copy Name" },
+    "copy-song-id":         { "type": "bool", "default": true,  "name": "Copy Song ID" },
+    "copy-creator":         { "type": "bool", "default": true,  "name": "Copy Creator Name" },
+    "copy-stars":           { "type": "bool", "default": true,  "name": "Copy Total Stars" },
+    "copy-difficulty":      { "type": "bool", "default": true,  "name": "Copy Difficulty" },
+    "copy-objects":         { "type": "bool", "default": true,  "name": "Copy Object Count" },
+    "copy-duration":        { "type": "bool", "default": true,  "name": "Copy Level Duration" },
+    "copy-include-labels":  { "type": "bool", "default": true,  "name": "Include Labels" }
+  }
 }
