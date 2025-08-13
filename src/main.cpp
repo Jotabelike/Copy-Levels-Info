@@ -57,30 +57,14 @@ static void copyLevelInfo(GJGameLevel* level) {
     bool copyObjects = mod->getSettingValue<bool>("copy-objects");
     bool copyDuration = mod->getSettingValue<bool>("copy-duration");
 
-<<<<<<< HEAD
-    std::stringstream info;
-    if (copyLevelID)
-        info << "ID: " << level->m_levelID.value() << "\n";
-    if (copyLevelName)
-        info << "Level Name: " << level->m_levelName.c_str() << "\n";
-    if (copySongID)
-        info << "Song ID: " << level->m_songID << "\n";
-    if (copyCreator)
-        info << "Creator: " << level->m_creatorName.c_str() << "\n";
-    if (copyStars)
-        info << "Stars: " << level->m_stars << "\n";
-    if (copyDifficulty)
-        info << "Difficulty: " << getLevelDifficulty(level) << "\n";
-    if (copyObjects)
-        info << "Objects: " << level->m_objectCount << "\n";
-    if (copyDuration)
-        info << "Duration: " << getLengthName(level->m_levelLength) << "\n";
-=======
+    // Nuevo setting opcional para incluir etiquetas
     bool includeLabels = true;
-    // Si el setting a n no existe (usuarios antiguos), se mantiene en true
-    try { includeLabels = mod->getSettingValue<bool>("copy-include-labels"); }
-    catch (...) {}
->>>>>>> 7366d03 (update 1.2.5)
+    try {
+        includeLabels = mod->getSettingValue<bool>("copy-include-labels");
+    }
+    catch (...) {
+        // Si el setting no existe (usuarios con versiones previas), se deja en true
+    }
 
     std::stringstream info;
 
