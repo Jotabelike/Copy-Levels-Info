@@ -3,9 +3,7 @@
 ## v1.2.5
 
 * Option to copy labels
-* logo update
-
-
+* logo update 
 
 ## v1.1.5
 
@@ -21,6 +19,6 @@
 
 ## v1.0.0
 
-* First release: Adds a "Copy" button to the level info screen.
+* First release: Adds a "COPY" button to the level info screen.
 * Copies detailed level info to clipboard in a single click.
 * Modern UI button and basic notifications.
