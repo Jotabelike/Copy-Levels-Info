@@ -11,8 +11,6 @@
 
 using namespace geode::prelude;
 
- 
-
 class ExposeScroll : public ScrollLayer {
 public:
     using ScrollLayer::ccTouchBegan;
@@ -20,8 +18,6 @@ public:
     using ScrollLayer::ccTouchEnded;
     using ScrollLayer::ccTouchCancelled;
 };
-
- 
 
 static std::string getLevelDifficulty(GJGameLevel* level) {
     if (!level) return "Unknown";
@@ -64,8 +60,6 @@ static std::string getGameMode(GJGameLevel* level) {
     return "Classic";
 }
 
- 
-
 enum class CopyType {
     ID, Name, Song, Creator, Stars, Difficulty, Objects, Length, GameMode
 };
@@ -76,8 +70,6 @@ struct CopyDef {
     std::string saveKey;
     std::function<std::string(GJGameLevel*)> getValue;
 };
-
- 
 
 class CopyRow : public CCNode {
 public:
@@ -106,10 +98,10 @@ public:
         m_width = width;
         this->setContentSize(CCSize(width, m_height));
         this->setAnchorPoint(CCPoint(0.5f, 0.5f));
- 
+
         m_bg = CCScale9Sprite::create("square02_small.png");
         m_bg->setContentSize(CCSize(width, m_height));
-        m_bg->setOpacity(50);  
+        m_bg->setOpacity(50);
         m_bg->setPosition(CCPoint(width / 2, m_height / 2));
         this->addChild(m_bg);
 
@@ -118,14 +110,12 @@ public:
         m_menu->setContentSize(CCSize(width, m_height));
         this->addChild(m_menu);
 
-         
         bool isToggled = Mod::get()->getSavedValue<bool>(def.saveKey, true);
         m_toggle = CCMenuItemToggler::createWithStandardSprites(this, nullptr, 0.6f);
         m_toggle->setPosition(CCPoint(20.f, m_height / 2));
         m_toggle->toggle(isToggled);
         m_menu->addChild(m_toggle);
 
-       
         std::string valText = def.getValue(level);
         if (valText.empty()) valText = "-";
 
@@ -142,14 +132,12 @@ public:
         }
         this->addChild(valLabel);
 
-        
         auto nameLabel = CCLabelBMFont::create(def.defaultName.c_str(), "goldFont.fnt");
         nameLabel->setScale(0.35f);
         nameLabel->setAnchorPoint(CCPoint(0.f, 0.5f));
         nameLabel->setPosition(CCPoint(45.f, 10.f));
         this->addChild(nameLabel);
 
-        
         m_dragHandle = CCSprite::createWithSpriteFrameName("edit_flipXBtn_001.png");
         m_dragHandle->setScale(0.6f);
         m_dragHandle->setRotation(90.0f);
@@ -158,17 +146,6 @@ public:
         this->addChild(m_dragHandle);
 
         return true;
-    }
-
-    void onEnter() override {
-        CCNode::onEnter();
-        if (m_menu) {
-            Loader::get()->queueInMainThread([this] {
-                if (this->getParent() && m_menu) {
-                    m_menu->setHandlerPriority(-505);
-                }
-                });
-        }
     }
 
     void savePreference() {
@@ -191,8 +168,6 @@ public:
         }
     }
 };
-
- 
 
 class CopyInfoPopup : public geode::Popup {
 protected:
@@ -228,15 +203,13 @@ protected:
         float popupW = 360.f;
         float popupH = 260.f;
 
-         
         if (!Popup::init(popupW, popupH)) return false;
 
         m_level = level;
         this->setTitle("Copy Info");
 
-       
         CCTouchDispatcher::get()->addTargetedDelegate(static_cast<CCTouchDelegate*>(this), -500, true);
- 
+
         auto resetSpr = CCSprite::createWithSpriteFrameName("GJ_resetBtn_001.png");
         resetSpr->setScale(0.8f);
         auto resetBtn = CCMenuItemSpriteExtra::create(
@@ -246,11 +219,10 @@ protected:
         resetMenu->addChild(resetBtn);
         resetMenu->setPosition(CCPoint(popupW - 25.f, popupH - 25.f));
         this->m_mainLayer->addChild(resetMenu);
- 
+
         float scrollW = 310.f;
         float scrollH = 140.f;
 
-        
         auto listBg = CCScale9Sprite::create("square02_small.png");
         listBg->setContentSize(CCSize(scrollW, scrollH));
         listBg->setOpacity(100);
@@ -268,7 +240,6 @@ protected:
         reloadRows();
         m_scrollLayer->scrollToTop();
 
-      
         auto lblMenu = CCMenu::create();
         lblMenu->setPosition(CCPoint(40.f, 35.f));
         this->m_mainLayer->addChild(lblMenu);
@@ -285,7 +256,6 @@ protected:
         lblText->setAnchorPoint(CCPoint(0, 0.5f));
         lblMenu->addChild(lblText);
 
-    
         auto btnSprite = CCSprite::createWithSpriteFrameName("GJ_copyBtn_001.png");
         btnSprite->setScale(0.85f);
 
@@ -355,7 +325,7 @@ protected:
             if (row == m_draggingRow) continue;
 
             float targetY = startY - (i * m_rowHeight);
-            CCPoint targetPos = CCPoint(155.f, targetY); 
+            CCPoint targetPos = CCPoint(155.f, targetY);
 
             if (animate) {
                 if (row->getPosition() != targetPos) {
@@ -410,8 +380,7 @@ protected:
         }
 
         CCPoint scrollLocal = m_scrollLayer->convertToNodeSpace(location);
-        CCRect scrollRect = CCRect(0, 0, m_scrollLayer->getContentSize().width,
-        m_scrollLayer->getContentSize().height);
+        CCRect scrollRect = CCRect(0, 0, m_scrollLayer->getContentSize().width, m_scrollLayer->getContentSize().height);
 
         if (scrollRect.containsPoint(scrollLocal)) {
             m_touchMode = SCROLLING;
@@ -534,8 +503,6 @@ public:
     }
 };
 
- 
-
 class $modify(LevelInfoLayerCopyHook, LevelInfoLayer) {
     struct Fields {
         CCMenu* menu = nullptr;
@@ -543,7 +510,7 @@ class $modify(LevelInfoLayerCopyHook, LevelInfoLayer) {
 
     bool init(GJGameLevel * level, bool p1) {
         if (!LevelInfoLayer::init(level, p1)) return false;
- 
+
         auto spr = CCSprite::createWithSpriteFrameName("GJ_copyBtn_001.png");
         spr->setScale(0.7f);
 
@@ -556,7 +523,6 @@ class $modify(LevelInfoLayerCopyHook, LevelInfoLayer) {
         m_fields->menu = CCMenu::create();
         m_fields->menu->addChild(btn);
 
-      
         if (auto likeBtn = this->getChildByID("like-button")) {
             m_fields->menu->setPosition(CCPoint(
                 likeBtn->getPositionX() - 50.f,
