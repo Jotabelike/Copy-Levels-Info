@@ -1,4 +1,6 @@
-# Versions
+## v1.2.6
+
+* A more accessible interface and easier information organization were added.
 
 ## v1.2.5
 
