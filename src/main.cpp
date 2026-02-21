@@ -503,6 +503,7 @@ public:
     }
 };
 
+
 class $modify(LevelInfoLayerCopyHook, LevelInfoLayer) {
     struct Fields {
         CCMenu* menu = nullptr;
