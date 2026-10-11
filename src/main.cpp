@@ -2,22 +2,14 @@
 #include <Geode/modify/LevelInfoLayer.hpp>
 #include <Geode/utils/cocos.hpp>
 #include <Geode/loader/Mod.hpp>
-#include <Geode/loader/Loader.hpp>
 #include <Geode/ui/ScrollLayer.hpp>
-#include <sstream>
-#include <vector>
 #include <algorithm>
-#include <chrono>
+#include <cmath>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace geode::prelude;
-
-class ExposeScroll : public ScrollLayer {
-public:
-    using ScrollLayer::ccTouchBegan;
-    using ScrollLayer::ccTouchMoved;
-    using ScrollLayer::ccTouchEnded;
-    using ScrollLayer::ccTouchCancelled;
-};
 
 static std::string getLevelDifficulty(GJGameLevel* level) {
     if (!level) return "Unknown";
@@ -68,7 +60,7 @@ struct CopyDef {
     CopyType type;
     std::string defaultName;
     std::string saveKey;
-    std::function<std::string(GJGameLevel*)> getValue;
+    std::string (*getValue)(GJGameLevel*);
 };
 
 class CopyRow : public CCNode {
@@ -76,15 +68,13 @@ public:
     CopyDef m_def;
     CCMenuItemToggler* m_toggle = nullptr;
     CCSprite* m_dragHandle = nullptr;
-    CCMenu* m_menu = nullptr;
     CCScale9Sprite* m_bg = nullptr;
 
-    float m_width = 300.f;
-    float m_height = 35.f;
+    static constexpr float m_height = 35.f;
 
-    static CopyRow* create(CopyDef def, float width, GJGameLevel* level) {
+    static CopyRow* create(const CopyDef& def, float width, GJGameLevel* level) {
         auto ret = new CopyRow();
-        if (ret && ret->init(def, width, level)) {
+        if (ret->init(def, width, level)) {
             ret->autorelease();
             return ret;
         }
@@ -92,10 +82,9 @@ public:
         return nullptr;
     }
 
-    bool init(CopyDef def, float width, GJGameLevel* level) {
+    bool init(const CopyDef& def, float width, GJGameLevel* level) {
         if (!CCNode::init()) return false;
         m_def = def;
-        m_width = width;
         this->setContentSize(CCSize(width, m_height));
         this->setAnchorPoint(CCPoint(0.5f, 0.5f));
 
@@ -105,16 +94,16 @@ public:
         m_bg->setPosition(CCPoint(width / 2, m_height / 2));
         this->addChild(m_bg);
 
-        m_menu = CCMenu::create();
-        m_menu->setPosition(CCPoint(0, 0));
-        m_menu->setContentSize(CCSize(width, m_height));
-        this->addChild(m_menu);
+        auto menu = CCMenu::create();
+        menu->setPosition(CCPoint(0, 0));
+        menu->setContentSize(CCSize(width, m_height));
+        this->addChild(menu);
 
         bool isToggled = Mod::get()->getSavedValue<bool>(def.saveKey, true);
         m_toggle = CCMenuItemToggler::createWithStandardSprites(this, nullptr, 0.6f);
         m_toggle->setPosition(CCPoint(20.f, m_height / 2));
         m_toggle->toggle(isToggled);
-        m_menu->addChild(m_toggle);
+        menu->addChild(m_toggle);
 
         std::string valText = def.getValue(level);
         if (valText.empty()) valText = "-";
@@ -123,13 +112,7 @@ public:
         valLabel->setAnchorPoint(CCPoint(0.f, 0.5f));
         valLabel->setPosition(CCPoint(45.f, 22.f));
 
-        float maxWidth = width - 80.f;
-        if (valLabel->getContentSize().width > maxWidth) {
-            valLabel->setScale(0.5f * (maxWidth / valLabel->getContentSize().width));
-        }
-        else {
-            valLabel->setScale(0.5f);
-        }
+        valLabel->limitLabelWidth(width - 80.f, 0.5f, 0.f);
         this->addChild(valLabel);
 
         auto nameLabel = CCLabelBMFont::create(def.defaultName.c_str(), "goldFont.fnt");
@@ -171,44 +154,43 @@ public:
 
 class CopyInfoPopup : public geode::Popup {
 protected:
-    GJGameLevel* m_level;
+    Ref<GJGameLevel> m_level;
     std::vector<CopyRow*> m_rows;
     ScrollLayer* m_scrollLayer = nullptr;
     CCNode* m_content = nullptr;
     CopyRow* m_draggingRow = nullptr;
-    CCMenuItemToggler* m_toggleLabels;
+    CCMenuItemToggler* m_toggleLabels = nullptr;
 
     float m_dragStartY = 0.f;
     float m_rowOriginalY = 0.f;
-    float m_rowHeight = 40.f;
+    static constexpr float m_rowHeight = 40.f;
 
     enum TouchMode { IDLE, SCROLLING, DRAGGING };
     TouchMode m_touchMode = IDLE;
 
-    std::vector<CopyDef> getAllDefs() {
-        return {
+    static const std::vector<CopyDef>& getAllDefs() {
+        static const std::vector<CopyDef> defs = {
             {CopyType::ID, "Level ID", "chk-id", [](GJGameLevel* l) { return std::to_string(l->m_levelID.value()); }},
-            {CopyType::Name, "Level Name", "chk-name", [](GJGameLevel* l) { return l->m_levelName; }},
-            {CopyType::Song, "Song ID", "chk-song", [](GJGameLevel* l) { return getSongInfo(l); }},
-            {CopyType::Creator, "Creator", "chk-creator", [](GJGameLevel* l) { return l->m_creatorName; }},
+            {CopyType::Name, "Level Name", "chk-name", [](GJGameLevel* l) -> std::string { return l->m_levelName; }},
+            {CopyType::Song, "Song ID", "chk-song", getSongInfo},
+            {CopyType::Creator, "Creator", "chk-creator", [](GJGameLevel* l) -> std::string { return l->m_creatorName; }},
             {CopyType::Stars, "Stars", "chk-stars", [](GJGameLevel* l) { return std::to_string(l->m_stars); }},
-            {CopyType::Difficulty, "Difficulty", "chk-diff", [](GJGameLevel* l) { return getLevelDifficulty(l); }},
+            {CopyType::Difficulty, "Difficulty", "chk-diff", getLevelDifficulty},
             {CopyType::Objects, "Objects", "chk-objs", [](GJGameLevel* l) { return std::to_string(l->m_objectCount); }},
             {CopyType::Length, "Duration", "chk-dur", [](GJGameLevel* l) { return getLengthName(l->m_levelLength); }},
-            {CopyType::GameMode, "Game Mode", "chk-mode", [](GJGameLevel* l) { return getGameMode(l); }}
+            {CopyType::GameMode, "Game Mode", "chk-mode", getGameMode}
         };
+        return defs;
     }
 
     bool init(GJGameLevel* level) {
         float popupW = 360.f;
         float popupH = 260.f;
 
-        if (!Popup::init(popupW, popupH)) return false;
+        if (!level || !Popup::init(popupW, popupH)) return false;
 
         m_level = level;
         this->setTitle("Copy Info");
-
-        CCTouchDispatcher::get()->addTargetedDelegate(static_cast<CCTouchDelegate*>(this), -500, true);
 
         auto resetSpr = CCSprite::createWithSpriteFrameName("GJ_resetBtn_001.png");
         resetSpr->setScale(0.8f);
@@ -232,7 +214,6 @@ protected:
         m_scrollLayer = ScrollLayer::create(CCSize(scrollW, scrollH));
         m_scrollLayer->setPosition(CCPoint((popupW - scrollW) / 2, 75.f));
         m_scrollLayer->setTouchEnabled(false);
-        CCTouchDispatcher::get()->removeDelegate(m_scrollLayer);
 
         this->m_mainLayer->addChild(m_scrollLayer);
         m_content = m_scrollLayer->m_contentLayer;
@@ -277,31 +258,22 @@ protected:
         m_rows.clear();
         m_content->removeAllChildren();
 
-        auto allDefs = getAllDefs();
+        const auto& allDefs = getAllDefs();
         auto savedOrder = Mod::get()->getSavedValue<std::vector<int>>("sort-order-v2");
         std::vector<CopyDef> sortedDefs;
 
-        if (savedOrder.empty() || savedOrder.size() != allDefs.size()) {
-            sortedDefs = allDefs;
-        }
-        else {
+        if (savedOrder.size() == allDefs.size()) {
             for (int typeInt : savedOrder) {
-                for (const auto& def : allDefs) {
-                    if ((int)def.type == typeInt) {
-                        sortedDefs.push_back(def);
-                        break;
-                    }
-                }
-            }
-            if (sortedDefs.size() != allDefs.size()) sortedDefs = allDefs;
-            if (sortedDefs.size() < allDefs.size()) {
-                for (auto& def : allDefs) {
-                    bool exists = false;
-                    for (auto& s : sortedDefs) if (s.type == def.type) exists = true;
-                    if (!exists) sortedDefs.push_back(def);
-                }
+                auto def = std::find_if(allDefs.begin(), allDefs.end(), [typeInt](const CopyDef& def) {
+                    return static_cast<int>(def.type) == typeInt;
+                });
+                if (def == allDefs.end() || std::any_of(sortedDefs.begin(), sortedDefs.end(), [typeInt](const CopyDef& def) {
+                    return static_cast<int>(def.type) == typeInt;
+                })) break;
+                sortedDefs.push_back(*def);
             }
         }
+        if (sortedDefs.size() != allDefs.size()) sortedDefs = allDefs;
 
         float rowWidth = 300.f;
 
@@ -320,7 +292,7 @@ protected:
         float totalHeight = m_content->getContentSize().height;
         float startY = totalHeight - (m_rowHeight / 2) - 5.f;
 
-        for (int i = 0; i < m_rows.size(); i++) {
+        for (size_t i = 0; i < m_rows.size(); ++i) {
             auto row = m_rows[i];
             if (row == m_draggingRow) continue;
 
@@ -346,18 +318,20 @@ protected:
             "Reset Defaults",
             "Are you sure you want to reset all copy settings?",
             "Cancel", "Reset",
-            [this](auto, bool btn2) {
+            [self = Ref(this)](auto, bool btn2) {
                 if (btn2) {
                     Mod::get()->setSavedValue("sort-order-v2", std::vector<int>());
                     Mod::get()->setSavedValue("chk-labels", true);
 
-                    auto allDefs = getAllDefs();
-                    for (const auto& def : allDefs) {
+                    for (const auto& def : getAllDefs()) {
                         Mod::get()->setSavedValue(def.saveKey, true);
                     }
 
-                    this->onClose(nullptr);
-                    CopyInfoPopup::create(m_level)->show();
+                    self->m_draggingRow = nullptr;
+                    self->m_touchMode = IDLE;
+                    self->m_toggleLabels->toggle(true);
+                    self->reloadRows();
+                    self->m_scrollLayer->scrollToTop();
                 }
             }
         );
@@ -365,13 +339,17 @@ protected:
 
     bool ccTouchBegan(CCTouch* touch, CCEvent* event) override {
         auto location = touch->getLocation();
+        CCPoint scrollLocal = m_scrollLayer->convertToNodeSpace(location);
+        CCRect scrollRect = CCRect(CCPoint(0, 0), m_scrollLayer->getContentSize());
+        if (!scrollRect.containsPoint(scrollLocal)) return false;
 
         for (auto row : m_rows) {
+            if (!row->isVisible()) continue;
             CCPoint handleWorldPos = row->m_dragHandle->getParent()->convertToWorldSpace(row->m_dragHandle->getPosition());
 
             if (ccpDistance(handleWorldPos, location) < 25.f) {
                 m_draggingRow = row;
-                m_dragStartY = location.y;
+                m_dragStartY = m_content->convertToNodeSpace(location).y;
                 m_rowOriginalY = row->getPositionY();
                 m_touchMode = DRAGGING;
                 row->setDraggingState(true);
@@ -379,12 +357,8 @@ protected:
             }
         }
 
-        CCPoint scrollLocal = m_scrollLayer->convertToNodeSpace(location);
-        CCRect scrollRect = CCRect(0, 0, m_scrollLayer->getContentSize().width, m_scrollLayer->getContentSize().height);
-
-        if (scrollRect.containsPoint(scrollLocal)) {
+        if (static_cast<CCTouchDelegate*>(m_scrollLayer)->ccTouchBegan(touch, event)) {
             m_touchMode = SCROLLING;
-            static_cast<ExposeScroll*>(m_scrollLayer)->ccTouchBegan(touch, event);
             return true;
         }
 
@@ -393,22 +367,18 @@ protected:
 
     void ccTouchMoved(CCTouch* touch, CCEvent* event) override {
         if (m_touchMode == DRAGGING && m_draggingRow) {
-            float diff = touch->getLocation().y - m_dragStartY;
-            float newY = m_rowOriginalY + diff;
+            float diff = m_content->convertToNodeSpace(touch->getLocation()).y - m_dragStartY;
             float totalH = m_content->getContentSize().height;
-            if (newY > totalH - 20) newY = totalH - 20;
-            if (newY < 20) newY = 20;
+            float newY = std::clamp(m_rowOriginalY + diff, 20.f, totalH - 20.f);
 
             m_draggingRow->setPositionY(newY);
 
             float startY = totalH - (m_rowHeight / 2) - 5.f;
-            int potentialIndex = std::round((startY - newY) / m_rowHeight);
-
-            if (potentialIndex < 0) potentialIndex = 0;
-            if (potentialIndex >= m_rows.size()) potentialIndex = m_rows.size() - 1;
+            int potentialIndex = std::clamp(static_cast<int>(std::round((startY - newY) / m_rowHeight)),
+                0, static_cast<int>(m_rows.size()) - 1);
 
             auto it = std::find(m_rows.begin(), m_rows.end(), m_draggingRow);
-            int currentIndex = std::distance(m_rows.begin(), it);
+            auto currentIndex = std::distance(m_rows.begin(), it);
 
             if (potentialIndex != currentIndex) {
                 m_rows.erase(it);
@@ -417,36 +387,35 @@ protected:
             }
         }
         else if (m_touchMode == SCROLLING) {
-            static_cast<ExposeScroll*>(m_scrollLayer)->ccTouchMoved(touch, event);
+            static_cast<CCTouchDelegate*>(m_scrollLayer)->ccTouchMoved(touch, event);
         }
+    }
+
+    void finishTouch() {
+        if (m_draggingRow) {
+            m_draggingRow->setDraggingState(false);
+            m_draggingRow = nullptr;
+            updateRowPositions(true);
+        }
+        m_touchMode = IDLE;
     }
 
     void ccTouchEnded(CCTouch* touch, CCEvent* event) override {
-        if (m_touchMode == DRAGGING && m_draggingRow) {
-            m_draggingRow->setDraggingState(false);
-            m_draggingRow = nullptr;
-            updateRowPositions(true);
+        if (m_touchMode == SCROLLING) {
+            static_cast<CCTouchDelegate*>(m_scrollLayer)->ccTouchEnded(touch, event);
         }
-        else if (m_touchMode == SCROLLING) {
-            static_cast<ExposeScroll*>(m_scrollLayer)->ccTouchEnded(touch, event);
-        }
-        m_touchMode = IDLE;
+        finishTouch();
     }
 
     void ccTouchCancelled(CCTouch* touch, CCEvent* event) override {
-        if (m_touchMode == DRAGGING && m_draggingRow) {
-            m_draggingRow->setDraggingState(false);
-            m_draggingRow = nullptr;
-            updateRowPositions(true);
+        if (m_touchMode == SCROLLING) {
+            static_cast<CCTouchDelegate*>(m_scrollLayer)->ccTouchCancelled(touch, event);
         }
-        else if (m_touchMode == SCROLLING) {
-            static_cast<ExposeScroll*>(m_scrollLayer)->ccTouchCancelled(touch, event);
-        }
-        m_touchMode = IDLE;
+        finishTouch();
     }
 
     void onCopyAndClose(CCObject*) {
-        std::stringstream info;
+        std::ostringstream info;
         std::vector<int> saveOrder;
 
         bool includeLabels = m_toggleLabels->isToggled();
@@ -454,16 +423,14 @@ protected:
 
         for (auto row : m_rows) {
             row->savePreference();
-            saveOrder.push_back((int)row->m_def.type);
+            saveOrder.push_back(static_cast<int>(row->m_def.type));
 
             if (row->m_toggle->isToggled()) {
                 std::string val = row->m_def.getValue(m_level);
                 if (includeLabels) {
-                    info << row->m_def.defaultName << ": " << val << "\n";
+                    info << row->m_def.defaultName << ": ";
                 }
-                else {
-                    info << val << "\n";
-                }
+                info << val << '\n';
             }
         }
 
@@ -479,22 +446,13 @@ protected:
             Notification::create("Error", NotificationIcon::Error)->show();
         }
 
-        CCTouchDispatcher::get()->removeDelegate(static_cast<CCTouchDelegate*>(this));
-        if (m_scrollLayer) CCTouchDispatcher::get()->removeDelegate(m_scrollLayer);
-
         this->onClose(nullptr);
-    }
-
-    void onClose(CCObject* obj) override {
-        CCTouchDispatcher::get()->removeDelegate(static_cast<CCTouchDelegate*>(this));
-        if (m_scrollLayer) CCTouchDispatcher::get()->removeDelegate(m_scrollLayer);
-        Popup::onClose(obj);
     }
 
 public:
     static CopyInfoPopup* create(GJGameLevel* level) {
         auto ret = new CopyInfoPopup();
-        if (ret && ret->init(level)) {
+        if (ret->init(level)) {
             ret->autorelease();
             return ret;
         }
@@ -505,10 +463,6 @@ public:
 
 
 class $modify(LevelInfoLayerCopyHook, LevelInfoLayer) {
-    struct Fields {
-        CCMenu* menu = nullptr;
-    };
-
     bool init(GJGameLevel * level, bool p1) {
         if (!LevelInfoLayer::init(level, p1)) return false;
 
@@ -521,30 +475,30 @@ class $modify(LevelInfoLayerCopyHook, LevelInfoLayer) {
             menu_selector(LevelInfoLayerCopyHook::onOpenCopyPopup)
         );
 
-        m_fields->menu = CCMenu::create();
-        m_fields->menu->addChild(btn);
+        auto menu = CCMenu::create();
+        menu->addChild(btn);
 
         if (auto likeBtn = this->getChildByID("like-button")) {
-            m_fields->menu->setPosition(CCPoint(
+            menu->setPosition(CCPoint(
                 likeBtn->getPositionX() - 50.f,
                 likeBtn->getPositionY()
             ));
         }
         else {
-            m_fields->menu->setPosition(CCPoint(106.f, 30.f));
+            menu->setPosition(CCPoint(106.f, 30.f));
         }
 
         if (auto bottom = this->getChildByID("bottom-menu")) {
-            bottom->addChild(m_fields->menu);
+            bottom->addChild(menu);
         }
         else {
-            this->addChild(m_fields->menu);
+            this->addChild(menu);
         }
 
         return true;
     }
 
     void onOpenCopyPopup(CCObject*) {
-        CopyInfoPopup::create(m_level)->show();
+        if (auto popup = CopyInfoPopup::create(m_level)) popup->show();
     }
 };
