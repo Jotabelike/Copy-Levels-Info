@@ -1,3 +1,6 @@
+## v1.2.8
+* version update and clean code
+
 ## v1.2.7
 
 * A more accessible interface and easier information organization were added.
